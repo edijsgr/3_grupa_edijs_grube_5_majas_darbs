@@ -1,0 +1,101 @@
+/etc/ansible/hosts:
+[servers]
+host1
+host2
+
+[webservers]
+host1
+
+[database]
+host2
+
+
+----------------------------
+ping.yml:
+---
+- name: ping module demo
+  hosts: all
+  become: false
+  tasks:
+    - name: test connection
+      ansible.builtin.ping
+----------------------------
+AdditionalPackages.yml:
+---
+- name: Playbook to Install Packages WEB
+  hosts:
+    - webservers
+  become: yes
+  tasks:
+  - name: Install php
+    package:
+      name:
+        - php
+      state: present
+- name: Playbook to Install Packages DB
+  hosts:
+    - database
+  become: yes
+  tasks:
+  - name: Install mariadb
+    package:
+      name:
+        - mariadb-server
+      state: present
+-------------------------------
+AdditionalPackagesDelete.yml
+---
+- name: Playbook to Delete Packages
+  hosts:
+    - webservers
+  become: yes
+  tasks:
+  - name: UnInstall php
+    package:
+      name:
+        - php
+      state: absent
+
+- name: Playbook to Delete Packages
+  hosts:
+    - database
+  become: yes
+  tasks:
+  - name: UnInstall mariadb
+    package:
+      name:
+        - mariadb-server
+      state: absent
+
+--------------------------------
+WebSuperPage.yml:
+---
+- name: Install home-page
+  hosts:
+    - webservers
+  become: yes
+  tasks:
+    - name: Install Apache
+      package:
+        name:
+          - apache2
+        state: latest
+    - name: remove default index.html
+      ansible.builtin.file:
+       path: /var/www/html
+       state: absent
+    - name: git checkout the website
+      git:
+        dest: /var/www/html
+        repo: https://github.com/lu-vumc-devops/lu-vumc-devops.superwebpage.git
+        force: yes
+    - name: Start theApache service
+      service:
+         name: apache2
+         state: started
+    - name: Open the firewall ports
+      ufw:
+        rule: allow
+        port: 80
+        proto: tcp
+
